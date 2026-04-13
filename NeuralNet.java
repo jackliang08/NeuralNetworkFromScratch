@@ -2,7 +2,7 @@ package execution;
 import java.util.*;
 
 public class NeuralNet {
-	ArrayList<ArrayList<Perceptron>> perceptrons;  // ArrayList containing all perceptrons from each layer
+	public ArrayList<ArrayList<Perceptron>> perceptrons;  // ArrayList containing all perceptrons from each layer
 
 	
 	// **CONSTRUCTORS**
@@ -14,7 +14,7 @@ public class NeuralNet {
 			perceptrons.add(new ArrayList<Perceptron>()); 
 		}
 		perceptrons.add(new ArrayList<Perceptron>());  // The output layer
-		perceptrons.get(layers).add(new Perceptron(1));  // The output perceptron
+		//perceptrons.get(layers).add(new Perceptron(1));  // The output perceptron
 	}
 	
 	
@@ -51,7 +51,6 @@ public class NeuralNet {
 		
 		for (int i=0;i<outputs.length;i++) {  // Adds bias and performs a function to standardize outputs
 			outputs[i] += perceptrons.get(layer+1).get(i).getBias();
-			System.out.print(i + ". ");
 			outputs[i] = sigmoid(outputs[i]);
 		}
 		
@@ -59,26 +58,48 @@ public class NeuralNet {
 		return outputs;  // The outputs of the previous layer, to be inputted in the subsequent layer
 	}
 	
-	public double forwardAll(double[] inputs) {
+	public double[] forwardAll(double[] inputs) {
 		double[] outputs = {};  // Will be the output for ALL layers after each iteration
 		for (int i=0;i<perceptrons.size()-1;i++) {
 			outputs = forward(i,inputs);
 			inputs = outputs;  // The output of this layer becomes the input of the next layer
 		}
-		return outputs[0];
+		for (int i=0;i<outputs.length;i++) {
+			perceptrons.getLast().get(i).updateOutput(0, outputs[i]);  // Updates output layers' outputArray (for backprop)
+		}
+		return outputs;
+	}
+	public void backwardOutput(double a, double target) {
+		double weightChanged;
+		double output;
+		double weightOutput;  // The output of node associated with the weight
+		ArrayList<Perceptron> prevLayer = perceptrons.get(perceptrons.size()-2);
+		for (int i=0;i<perceptrons.getLast().size();i++) {  // Each output neuron
+			for (int j=0;j<perceptrons.getLast().size();j++) {  // Each weight before the output
+				for (int k=0;k<prevLayer.size();k++) {  // Each node before the output
+					output = perceptrons.getLast().get(i).getOutput(0);
+					weightOutput = prevLayer.get(k).getOutput(j);  // Get the jth weight from the kth neuron
+					weightChanged = a * (target-output) * (output*(1-output)) * (weightOutput);
+					prevLayer.get(k).updateWeight(j, prevLayer.get(k).getWeight(j) + weightChanged);  // Updates the jth weight of the kth node
+				}
+			}
+			
+		}
 	}
 	
+	/*
 	public void backward(int layer, Perceptron p, double a, double error) {
 		double output;  // Output of current neuron with that weight
 		double forwardOutput;  // Output of neuron in front of weight
 		double deltaWeight;  // The change in weight
 		for (int i=0;i<perceptrons.get(layer+1).size();i++) {  //  Iterates through the length of weights in the perceptron
 			output = p.getOutput(i);
-			forwardOutput = perceptrons.get(layer+1).get(i).getOutput();  // TODO: figure out how to plug in sigmoid derivative
+			forwardOutput = perceptrons.get(layer+1).get(i).getOutput();  
 			deltaWeight = a;
 			deltaWeight *= 
 		}
 	}
+	*/
 	
 	// **MATHEMATIC FUNCTIONS**
 	
@@ -87,7 +108,8 @@ public class NeuralNet {
 	// ONLY works if arr.length == mat.length (A.K.A columns)
 	public double[] matMult(int layer, double[] arr, double[][] mat) {
 		if (arr.length != mat.length) {
-			System.out.printf("arr length of %d cannot match matrix column size of %d",arr.length,mat.length);
+			System.out.printf("arr length of %d cannot match matrix column size of %d on layer %d%n",arr.length,mat.length,layer);
+			System.out.println(Arrays.toString(arr));
 			return new double[mat[0].length]; 
 		}
 		double[] output = new double[mat[0].length];
@@ -98,7 +120,7 @@ public class NeuralNet {
 			for (int j=0;j<arr.length;j++) {
 				value = arr[i] * mat[j][i];
 				sum += value;
-				perceptrons.get(layer).get(j).updateOutput(i, value);  // Updates the output array of the perceptron (used in backprop)
+				perceptrons.get(layer).get(j).updateOutput(i, sigmoid(value));  // Updates the output array of the perceptron (used in backprop)
 			}
 			output[i] = sum;
 		}
@@ -107,12 +129,10 @@ public class NeuralNet {
 	
 	// Performs the sigmoid function to standardize all values
 	public double sigmoid(double val) {
-		System.out.println(val);
-		return val ;//1/(1+Math.exp(val));
+		return 1/(1+Math.exp(-1*val));
 	}
 	// Performs the ReLU function to standardize all values
 	public double relu(double val) {
-		System.out.println(val);
 		return Math.max(0, val);
 	}
 }
