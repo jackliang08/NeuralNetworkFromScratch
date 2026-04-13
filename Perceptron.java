@@ -54,36 +54,4 @@ public class Perceptron {
 		outputs = os;
 	}
 	
-	
-	
-	/*public Perceptron(double[] inputs) {
-	this.inputs = inputs;
-	weights = new double[inputs.length];
-	for (int i=0;i<weights.length;i++) {
-		weights[i] = Math.random() * 2 - 1;  // Assigns a random weight
-	}
-	bias = Math.random() * 2 -1;  // Assigns a random bias
-}*/
-	
-	/*public void updateInputs(double[] newInputs) {
-	if (newInputs.length != inputs.length) {
-		System.out.println("Lengths not equal");
-		return;
-	}
-	for (int i=0;i<inputs.length;i++) {
-		inputs[i] = newInputs[i];
-	}
-}*/
-	
-	// Does forward propagation
-	/*public double forward() {
-		double output = bias;  // Adds bias
-		for (int i=0;i<inputs.length;i++) {
-			output += inputs[i] * weights[i];
-		}
-		return output;
-	}*/
-	
-	
-	
 }
