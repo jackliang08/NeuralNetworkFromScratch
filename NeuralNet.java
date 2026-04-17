@@ -69,8 +69,9 @@ public class NeuralNet {
 		}
 		return outputs;
 	}
-	public void backwardOutput(double a, double target) {
+	public void backwardOutput(double a, double... target) {
 		double weightChanged;
+		double biasChanged;
 		double output;
 		double weightOutput;  // The output of node associated with the weight
 		ArrayList<Perceptron> prevLayer = perceptrons.get(perceptrons.size()-2);
@@ -79,8 +80,10 @@ public class NeuralNet {
 				for (int k=0;k<prevLayer.size();k++) {  // Each node before the output
 					output = perceptrons.getLast().get(i).getOutput(0);
 					weightOutput = prevLayer.get(k).getOutput(j);  // Get the jth weight from the kth neuron
-					weightChanged = a * (target-output) * (output*(1-output)) * (weightOutput);
+					weightChanged = a * 2 * (target[i]-output) * (output*(1-output)) * (weightOutput);  //TODO: figure out whether output is correct or if its switched with weightOutput
+					biasChanged = a * 2 * (target[i]-output) * (output*(1-output));
 					prevLayer.get(k).updateWeight(j, prevLayer.get(k).getWeight(j) + weightChanged);  // Updates the jth weight of the kth node
+					perceptrons.get(perceptrons.size()-1).get(i).updateBias(perceptrons.get(perceptrons.size()-1).get(i).getBias() + biasChanged);  //Updates the bias of the ith neuron
 				}
 			}
 			
