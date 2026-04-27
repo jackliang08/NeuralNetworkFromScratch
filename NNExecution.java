@@ -5,69 +5,84 @@ import java.io.*;
 public class NNExecution {
 
 	public static void main(String[] args) throws IOException{
-		Scanner reader = new Scanner(new File("src\\execution\\Iris.dat"));
+		Scanner trainReader = new Scanner(new File("src\\execution\\Spam.dat"));
+		Scanner testReader = new Scanner(new File("src\\execution\\SpamTest.dat"));
 		String[] lineSplit;
-		int layers = 1;  // Change this to adjust layers
+		int layers = 4;  // Change this to adjust layers
+		int hiddenNeurons = 8;  // Adjusts number of neurons per hidden layer
+		int inputNum = 57;
+		int outputNum = 1;
+		double learningRate = 0.001;
+		int[] confusion = new int[2];
 		
 		NeuralNet nn1 = new NeuralNet(layers);
-		for (int i=0;i<layers-1;i++) {  // Adds the perceptrons to each layer
-			nn1.addPerceptrons(i,  3, 3);
+		nn1.addPerceptrons(0,inputNum,hiddenNeurons);
+		for (int i=1;i<layers-1;i++) {  // Adds the perceptrons to each layer
+			nn1.addPerceptrons(i, hiddenNeurons, hiddenNeurons);
 		}
-		nn1.addPerceptrons(layers-1,4,3);  // Adds the last hidden layer before output
-		nn1.addPerceptrons(layers, 3, 1);  // Adds the output perceptron
-		
+		nn1.addPerceptrons(layers-1,hiddenNeurons,outputNum);  // Adds the last hidden layer before output
+		nn1.addPerceptrons(layers, outputNum, 1);  // Adds the output perceptron
 		double[] inputs;
 		double[] outputs;
 		double[] targets; String target;
-		for (int i=0;i<150;i++) {
+		
+		
+		int n=1;
+		int epochSize = 10; int epoch = 1;
+		while(trainReader.hasNextLine()) {
 			
 			// Reads the data, then stores the information in inputs and outputs
-			if (!reader.hasNext()) break;
-			lineSplit = reader.nextLine().split("[,]");
+			if (!trainReader.hasNext()) break;
+			lineSplit = trainReader.nextLine().split("[,]");
 			
 			inputs = new double[lineSplit.length-1];
 			for (int inputInd=0;inputInd<lineSplit.length-1;inputInd++) {  // Stores the input data
 				inputs[inputInd] = Double.parseDouble(lineSplit[inputInd]);
 			}
 			
+			
+			
 			//Assigns output based on a one-hot vector system
 			target = lineSplit[lineSplit.length-1];
-			if (target.equals("Iris-setosa")) targets = new double[] {1,0,0};
-			else if (target.equals("Iris-versicolor")) targets = new double[] {0,1,0};
-			else if (target.equals("Iris-virginica")) targets = new double[] {0,0,1};
-			else targets = new double[] {0,0,0};
+			targets = new double[] {Integer.parseInt(target)};
 			
 			
 			// Running the Neural Network for one epoch
-			System.out.printf("Epoch: %d%n", i);
 			outputs = nn1.forwardAll(inputs);
 			
-//			System.out.println(outputs[0]);
-//			System.out.println(outputs[1]);
-//			System.out.println(outputs[2]);
-			
-			//System.out.println(Arrays.toString(nn1.perceptrons.get(nn1.perceptrons.size()-2).get(0).getWeights()));
-			nn1.backwardOutput(0.1, targets);
+			// Tests the testing data after each epoch
+			if (n++ % epochSize == 0) {
+				while (testReader.hasNextLine()) {
+					lineSplit = testReader.nextLine().split("[,]");
+					inputs = new double[lineSplit.length-1];
+					for (int inputInd=0;inputInd<lineSplit.length-1;inputInd++) {  // Stores the input data
+						inputs[inputInd] = Double.parseDouble(lineSplit[inputInd]);
+					}
+					target = lineSplit[lineSplit.length-1];
+					// returns 1
+					outputs = nn1.forwardAll(inputs);
+					outputs[0] = Math.round(outputs[0]);
+					if (Double.parseDouble(target) == outputs[0]) {
+						confusion[0] += 1;
+					}
+					else {
+						confusion[1] += 1;
+					}
+				}
+				System.out.printf("%d %.2f%n",epoch++,100.0*confusion[0]/(confusion[0]+confusion[1]));
+				testReader = new Scanner(new File("src\\execution\\SpamTest.dat"));
+			}
+			nn1.backwardAll(learningRate, targets);
 
-			//System.out.println(Arrays.toString(nn1.perceptrons.get(nn1.perceptrons.size()-2).get(0).getWeights()));
-			System.out.println();
 		}
-		// 6.5,3.0,5.5,1.8,Iris-virginica
-		outputs = nn1.forwardAll(new double[] {6.5,3.0,5.5,1.8});
 		
-		// Returns from one-hot to a categorical output
-		double[] oneHot = convertOneHot(outputs);
-		if (oneHot[0] == 1) {
-			System.out.println("Iris-setosa");
-		}
-		if (oneHot[1] == 1) {
-			System.out.println("Iris-versicolor");
-		}
-		if (oneHot[2] == 1) {
-			System.out.println("Iris-virginica");
-		}
-		System.out.println(Arrays.toString(outputs));
+		
+	
 	}
+		
+		
+	
+	// Converts target (categorical) to one-hot vector
 	static double[] convertOneHot(double[] oneHot) {
 		double max=oneHot[0]; int maxIndex=0;
 		for (int i=0;i<oneHot.length;i++) {
@@ -80,6 +95,12 @@ public class NNExecution {
 		double[] maxOneHot = new double[oneHot.length];
 		maxOneHot[maxIndex] = 1;
 		return maxOneHot;
+		
+		
 	}
+	
+	
+	
+	
 
 }
