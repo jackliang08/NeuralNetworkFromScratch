@@ -3,13 +3,14 @@ package execution;
 public class Perceptron {
 	double[] weights;
 	double bias;
-	double[] outputs;
+	double output;
 	
 	
+	// **CLASS SETUP**
 	
 	public Perceptron(int outputLength) {
 		weights = new double[outputLength];
-		outputs = new double[outputLength];
+		output = 0;
 		for (int i=0;i<weights.length;i++) {
 			weights[i] = Math.random() * 2 - 1;  // Assigns a random weight
 		}
@@ -26,8 +27,8 @@ public class Perceptron {
 	public double getBias() {
 		return bias;
 	}
-	public double getOutput(int pos) {
-		return outputs[pos];
+	public double getOutput() {
+		return output;
 	}
 	
 	// Changes the weights on the perceptron for forward propagation
@@ -47,11 +48,8 @@ public class Perceptron {
 	public void updateBias(double newBias) {
 		bias = newBias;
 	}
-	public void updateOutput(int pos, double o) {
-		outputs[pos] = o;
-	}
-	public void updateOutputs(double[] os) {
-		outputs = os;
+	public void updateOutput(double o) {
+		output = o;
 	}
 	
 }
